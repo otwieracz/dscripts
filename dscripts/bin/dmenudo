@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+
+CONFIG_DIR="$HOME/.config/dmenudo"
+DMENU="dmenu -i -l 7"
+DMENU_PAGER="dmenu -i -l 15"
+
+function do_select_directory {
+    # Unset in-dofile vars
+    unset TITLE
+    unset EXEC
+    unset MESSAGE
+
+    # unset other vars
+    unset DIRS
+    unset FUNS
+    unset DMENUSTRING
+    unset RESULT
+
+    CW_DIR="$(realpath  $1)"
+    # get list of directories here
+    DIRS=$(find "$CW_DIR" -mindepth 1 -maxdepth 1 -type d | sort)
+    # get list of commands
+    FUNS=$(find "$CW_DIR" -mindepth 1 -maxdepth 1 -iname "*.do" ! -iname "root.do" -type f | sort)
+
+    # Construct dmenu string title | id
+    DMENUSTRING=""
+    for DIR in $DIRS
+    do
+        rootfile="${DIR}/root.do"
+        [[ -f "${rootfile}" ]] && {
+            source "${rootfile}"
+            # TITLE is entry title
+            DMENUSTRING+="${TITLE} | ${rootfile}\n"
+        }
+    done
+    for FUNFILE in $FUNS
+    do
+        source ${FUNFILE}
+        # TITLE is entry title
+        DMENUSTRING+="${TITLE} | ${FUNFILE}\n"
+    done
+
+    [[ -n "${DMENUSTRING}" ]] && {
+        RESULT=$(echo -e "${DMENUSTRING}" | column -t -s\| -o\| | ${DMENU})
+        exec_selection "$RESULT"
+    } || false
+}
+
+function exec_selection {
+    # Unset in-dofile vars
+    unset TITLE
+    unset EXEC
+    unset MESSAGE
+    unset CATCHOUTPUT
+    unset OUTPUT
+    unset EXIT_CODE
+
+    SELECTION_DOFILE="$(echo $1 | sed s/.*\|\ //)"
+
+    [[ -f $SELECTION_DOFILE ]] && {
+        [[ "$(basename ${SELECTION_DOFILE})" = "root.do" ]] && {
+            dofile_directory=$(dirname "${SELECTION_DOFILE}")
+            # selection is directory, dive into
+            do_select_directory "${dofile_directory}"
+        } || {
+            # selection is actionfile - execute it
+            source $SELECTION_DOFILE
+
+            # execute (if any)
+            [[ -n "${EXEC}" ]] && {
+                echo executing: ${EXEC}
+                [[ -n $CATCHOUTPUT ]] && {
+                    OUTPUT=$(/usr/bin/env bash -c "${EXEC} 2>&1")
+                    EXIT_CODE=$?
+                    echo -e "Process finisihed with code: ${EXIT_CODE}\n\n${OUTPUT}" | ${DMENU_PAGER}
+                } || {
+                    /usr/bin/env bash -c "${EXEC}"
+                }
+            } || true
+            # display message (if any)
+            [[ -n "${MESSAGE}" ]] && {
+                echo "${MESSAGE}" | ${DMENU_PAGER}
+            } || true
+        }
+    }
+}
+
+do_select_directory $CONFIG_DIR

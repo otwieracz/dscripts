@@ -1,0 +1,13 @@
+dscripts - simple utility scripts with dmenu
+------------------------------------------------------------------------------
+dmenudo  - dmenu command dispatcher
+dmount   - dmenu mounter
+dumount  - dmenu unmounter
+
+-- dmenudo -------------------------------------------------------------------
+dmenudo looks for config in ~/.config/dmenudo. It's configured with just shell
+files and specific directory structure. Look at example-config directory.
+
+-- nixos ---------------------------------------------------------------------
+default.nix is just NixOS recipe for dscripts. If not on NixOS, just ignore it.
+

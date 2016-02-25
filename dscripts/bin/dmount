@@ -1,0 +1,12 @@
+#!/bin/bash
+
+DISK="$(ls -l1 /dev/disk/by-id/ | grep -v total | sort -k10 | uniq -f 10 | awk '{ print $9 }' | sort | dmenu -l 10 -i)"
+MOUNT="/media/${DISK}"
+
+if [ -n "${DISK}" ]
+then
+	sudo mkdir -p "${MOUNT}"
+	echo [$(date)] sudo mount "/dev/disk/by-id/${DISK}" "${MOUNT}"
+	sudo mount "/dev/disk/by-id/${DISK}" "${MOUNT}"
+fi
+

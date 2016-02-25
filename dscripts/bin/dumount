@@ -1,0 +1,12 @@
+#!/bin/bash
+
+DISK="$(grep media/ /etc/mtab | awk '{ print $2 }' | sed 's/\/media\///' | uniq | dmenu -l 10 -i)"
+MOUNT="/media/${DISK}"
+
+if [ -n "${DISK}" ]
+then
+	sudo sync
+	sudo umount "${MOUNT}"
+	sudo rmdir "${MOUNT}"
+fi
+

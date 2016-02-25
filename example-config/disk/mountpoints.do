@@ -1,0 +1,2 @@
+TITLE="Mountpoints"
+MESSAGE="$(mount)"
